@@ -6,65 +6,45 @@ import javax.swing.*;
 import java.awt.*;
 
 public class FormularioDvd extends JFrame {
-    private JTextField txtCodigo, txtTitulo, txtDirector, txtDuracion, txtGenero, txtUnidades;
+    private JTextField txtCod, txtTit, txtDir, txtDur, txtGen, txtUni;
 
     public FormularioDvd() {
-        setTitle("Gestión de DVDs");
-        setSize(450, 400);
+        setTitle("Registrar DVD");
+        setSize(450, 420);
+        setLayout(new GridLayout(7, 2, 10, 10));
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(7, 2, 5, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(new JLabel(" Código (Auto):"));
+        txtCod = new JTextField(new DvdCrud().generarSiguienteCodigo());
+        txtCod.setEditable(false);
+        add(txtCod);
 
-        panel.add(new JLabel("Código (Auto):"));
-        txtCodigo = new JTextField();
-        txtCodigo.setEditable(false);
-        txtCodigo.setBackground(new Color(220, 220, 220));
-        txtCodigo.setText(new DvdCrud().generarSiguienteCodigo());
-        panel.add(txtCodigo);
+        add(new JLabel(" Título:")); txtTit = new JTextField(); add(txtTit);
+        add(new JLabel(" Director:")); txtDir = new JTextField(); add(txtDir);
+        add(new JLabel(" Duración:")); txtDur = new JTextField(); add(txtDur);
+        add(new JLabel(" Género:")); txtGen = new JTextField(); add(txtGen);
+        add(new JLabel(" Unidades:")); txtUni = new JTextField(); add(txtUni);
 
-        panel.add(new JLabel("Título:")); txtTitulo = new JTextField(); panel.add(txtTitulo);
-        panel.add(new JLabel("Director:")); txtDirector = new JTextField(); panel.add(txtDirector);
-        panel.add(new JLabel("Duración:")); txtDuracion = new JTextField(); panel.add(txtDuracion);
-        panel.add(new JLabel("Género:")); txtGenero = new JTextField(); panel.add(txtGenero);
-        panel.add(new JLabel("Unidades:")); txtUnidades = new JTextField(); panel.add(txtUnidades);
-
-        JButton btnGuardar = new JButton("Guardar DVD");
+        JButton btnGuardar = new JButton("Guardar");
         btnGuardar.addActionListener(e -> guardar());
-
-        add(panel, BorderLayout.CENTER);
-        add(btnGuardar, BorderLayout.SOUTH);
+        add(btnGuardar);
+        add(new JButton("Cancelar") {{ addActionListener(e -> dispose()); }});
     }
 
     private void guardar() {
         try {
-            if (txtTitulo.getText().isEmpty() || txtDirector.getText().isEmpty() || txtUnidades.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Completa los campos obligatorios.", "Atención", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            DVD dvd = new DVD(
-                    txtCodigo.getText(),
-                    txtTitulo.getText(),
-                    txtDirector.getText(),
-                    txtDuracion.getText(),
-                    txtGenero.getText(),
-                    Integer.parseInt(txtUnidades.getText().trim())
+            DVD d = new DVD(
+                    txtCod.getText(), txtTit.getText(), txtDir.getText(),
+                    txtDur.getText(), txtGen.getText(),
+                    Integer.parseInt(txtUni.getText().trim())
             );
 
-            if (new DvdCrud().registrarDVD(dvd)) {
-                int respuesta = JOptionPane.showConfirmDialog(this, "DVD guardado.\n¿Registrar otro?", "Éxito", JOptionPane.YES_NO_OPTION);
-                if (respuesta == JOptionPane.YES_OPTION) { limpiar(); } else { this.dispose(); }
+            if (new DvdCrud().registrarDVD(d)) {
+                JOptionPane.showMessageDialog(this, "DVD registrado.");
+                dispose();
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error en los datos ingresados.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Error: Unidades debe ser un número.");
         }
-    }
-
-    private void limpiar() {
-        txtTitulo.setText(""); txtDirector.setText(""); txtDuracion.setText("");
-        txtGenero.setText(""); txtUnidades.setText("");
-        txtCodigo.setText(new DvdCrud().generarSiguienteCodigo());
     }
 }

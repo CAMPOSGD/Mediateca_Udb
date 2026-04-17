@@ -6,67 +6,47 @@ import javax.swing.*;
 import java.awt.*;
 
 public class FormularioCd extends JFrame {
-    private JTextField txtCodigo, txtTitulo, txtArtista, txtGenero, txtDuracion, txtCanciones, txtUnidades;
+    private JTextField txtCod, txtTit, txtArt, txtGen, txtDur, txtCan, txtUni;
 
     public FormularioCd() {
-        setTitle("Gestión de CDs de Audio");
-        setSize(450, 450);
+        setTitle("Registrar CD de Audio");
+        setSize(450, 480);
+        setLayout(new GridLayout(8, 2, 10, 10));
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(8, 2, 5, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(new JLabel(" Código (Auto):"));
+        txtCod = new JTextField(new CdCrud().generarSiguienteCodigo());
+        txtCod.setEditable(false);
+        add(txtCod);
 
-        panel.add(new JLabel("Código (Auto):"));
-        txtCodigo = new JTextField();
-        txtCodigo.setEditable(false);
-        txtCodigo.setBackground(new Color(220, 220, 220));
-        txtCodigo.setText(new CdCrud().generarSiguienteCodigo());
-        panel.add(txtCodigo);
+        add(new JLabel(" Título:")); txtTit = new JTextField(); add(txtTit);
+        add(new JLabel(" Artista:")); txtArt = new JTextField(); add(txtArt);
+        add(new JLabel(" Género:")); txtGen = new JTextField(); add(txtGen);
+        add(new JLabel(" Duración (min):")); txtDur = new JTextField(); add(txtDur);
+        add(new JLabel(" N° Canciones:")); txtCan = new JTextField(); add(txtCan);
+        add(new JLabel(" Unidades:")); txtUni = new JTextField(); add(txtUni);
 
-        panel.add(new JLabel("Título:")); txtTitulo = new JTextField(); panel.add(txtTitulo);
-        panel.add(new JLabel("Artista:")); txtArtista = new JTextField(); panel.add(txtArtista);
-        panel.add(new JLabel("Género:")); txtGenero = new JTextField(); panel.add(txtGenero);
-        panel.add(new JLabel("Duración:")); txtDuracion = new JTextField(); panel.add(txtDuracion);
-        panel.add(new JLabel("N° Canciones:")); txtCanciones = new JTextField(); panel.add(txtCanciones);
-        panel.add(new JLabel("Unidades:")); txtUnidades = new JTextField(); panel.add(txtUnidades);
-
-        JButton btnGuardar = new JButton("Guardar CD");
+        JButton btnGuardar = new JButton("Guardar");
         btnGuardar.addActionListener(e -> guardar());
-
-        add(panel, BorderLayout.CENTER);
-        add(btnGuardar, BorderLayout.SOUTH);
+        add(btnGuardar);
+        add(new JButton("Cancelar") {{ addActionListener(e -> dispose()); }});
     }
 
     private void guardar() {
         try {
-            if (txtTitulo.getText().isEmpty() || txtArtista.getText().isEmpty() || txtUnidades.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Completa los campos obligatorios.", "Atención", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
             CD cd = new CD(
-                    txtCodigo.getText(),
-                    txtTitulo.getText(),
-                    txtArtista.getText(),
-                    txtGenero.getText(),
-                    txtDuracion.getText(),
-                    Integer.parseInt(txtCanciones.getText().trim()),
-                    Integer.parseInt(txtUnidades.getText().trim())
+                    txtCod.getText(), txtTit.getText(), txtArt.getText(),
+                    txtGen.getText(), txtDur.getText(),
+                    Integer.parseInt(txtCan.getText().trim()),
+                    Integer.parseInt(txtUni.getText().trim())
             );
 
             if (new CdCrud().registrarCD(cd)) {
-                int respuesta = JOptionPane.showConfirmDialog(this, "CD guardado.\n¿Registrar otro?", "Éxito", JOptionPane.YES_NO_OPTION);
-                if (respuesta == JOptionPane.YES_OPTION) { limpiar(); } else { this.dispose(); }
+                JOptionPane.showMessageDialog(this, "CD registrado.");
+                dispose();
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error en los datos ingresados.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Error: Canciones y Unidades deben ser números.");
         }
-    }
-
-    private void limpiar() {
-        txtTitulo.setText(""); txtArtista.setText(""); txtGenero.setText("");
-        txtDuracion.setText(""); txtCanciones.setText(""); txtUnidades.setText("");
-        txtCodigo.setText(new CdCrud().generarSiguienteCodigo());
     }
 }

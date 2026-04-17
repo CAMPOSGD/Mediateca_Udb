@@ -8,6 +8,8 @@ import javax.swing.table.TableRowSorter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class Principal extends JFrame {
 
@@ -455,7 +457,27 @@ public class Principal extends JFrame {
     }
 
     public static void main(String[] args) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) {}
-        SwingUtilities.invokeLater(() -> new Principal().setVisible(true));
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {}
+
+        SwingUtilities.invokeLater(() -> {
+            Conexion conector = new Conexion();
+            Connection prueba = conector.getConexion();
+
+            if (prueba != null) {
+                try {
+                    prueba.close();
+                    new Principal().setVisible(true);
+                } catch (SQLException e) {}
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "No se pudo establecer conexión con la base de datos mediateca_db.\n" +
+                                "Por favor, verifique que su servidor MySQL esté activo.",
+                        "Error de Conexión",
+                        JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+            }
+        });
     }
 }

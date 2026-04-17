@@ -6,69 +6,56 @@ import javax.swing.*;
 import java.awt.*;
 
 public class FormularioLibro extends JFrame {
-    private JTextField txtCodigo, txtTitulo, txtAutor, txtPaginas, txtEditorial, txtIsbn, txtAnio, txtUnidades;
+    private JTextField txtCod, txtTit, txtAut, txtPag, txtEdi, txtIsbn, txtAnio, txtUni;
 
     public FormularioLibro() {
-        setTitle("Gestión de Libros");
-        setSize(450, 500);
+        setTitle("Registrar Nuevo Libro");
+        setSize(450, 550);
+        setLayout(new GridLayout(9, 2, 10, 10));
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(9, 2, 5, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(new JLabel(" Código (Auto):"));
+        txtCod = new JTextField(new LibroCrud().generarSiguienteCodigo());
+        txtCod.setEditable(false);
+        add(txtCod);
 
-        panel.add(new JLabel("Código (Auto):"));
-        txtCodigo = new JTextField();
-        txtCodigo.setEditable(false);
-        txtCodigo.setBackground(new Color(220, 220, 220));
-        txtCodigo.setText(new LibroCrud().generarSiguienteCodigo());
-        panel.add(txtCodigo);
+        add(new JLabel(" Título:")); txtTit = new JTextField(); add(txtTit);
+        add(new JLabel(" Autor:")); txtAut = new JTextField(); add(txtAut);
+        add(new JLabel(" N° Páginas:")); txtPag = new JTextField(); add(txtPag);
+        add(new JLabel(" Editorial:")); txtEdi = new JTextField(); add(txtEdi);
+        add(new JLabel(" ISBN:")); txtIsbn = new JTextField(); add(txtIsbn);
+        add(new JLabel(" Año Publicación:")); txtAnio = new JTextField(); add(txtAnio);
+        add(new JLabel(" Unidades:")); txtUni = new JTextField(); add(txtUni);
 
-        panel.add(new JLabel("Título:")); txtTitulo = new JTextField(); panel.add(txtTitulo);
-        panel.add(new JLabel("Autor:")); txtAutor = new JTextField(); panel.add(txtAutor);
-        panel.add(new JLabel("N° Páginas:")); txtPaginas = new JTextField(); panel.add(txtPaginas);
-        panel.add(new JLabel("Editorial:")); txtEditorial = new JTextField(); panel.add(txtEditorial);
-        panel.add(new JLabel("ISBN:")); txtIsbn = new JTextField(); panel.add(txtIsbn);
-        panel.add(new JLabel("Año Publicación:")); txtAnio = new JTextField(); panel.add(txtAnio);
-        panel.add(new JLabel("Unidades:")); txtUnidades = new JTextField(); panel.add(txtUnidades);
-
-        JButton btnGuardar = new JButton("Guardar Libro");
+        JButton btnGuardar = new JButton("Guardar");
         btnGuardar.addActionListener(e -> guardar());
+        add(btnGuardar);
 
-        add(panel, BorderLayout.CENTER);
-        add(btnGuardar, BorderLayout.SOUTH);
+        JButton btnCerrar = new JButton("Cancelar");
+        btnCerrar.addActionListener(e -> dispose());
+        add(btnCerrar);
     }
 
     private void guardar() {
         try {
-            if (txtTitulo.getText().isEmpty() || txtAutor.getText().isEmpty() || txtUnidades.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Completa los campos obligatorios.", "Atención", JOptionPane.WARNING_MESSAGE);
+            if (txtTit.getText().isEmpty() || txtAut.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Título y Autor son obligatorios.");
                 return;
             }
 
-            Libro libro = new Libro(
-                    txtCodigo.getText(),
-                    txtTitulo.getText(),
-                    txtAutor.getText(),
-                    Integer.parseInt(txtPaginas.getText().trim()),
-                    txtEditorial.getText(),
-                    txtIsbn.getText(),
-                    Integer.parseInt(txtAnio.getText().trim()),
-                    Integer.parseInt(txtUnidades.getText().trim())
+            Libro l = new Libro(
+                    txtCod.getText(), txtTit.getText(), txtAut.getText(),
+                    Integer.parseInt(txtPag.getText().trim()), txtEdi.getText(),
+                    txtIsbn.getText(), Integer.parseInt(txtAnio.getText().trim()),
+                    Integer.parseInt(txtUni.getText().trim())
             );
 
-            if (new LibroCrud().registrarLibro(libro)) {
-                int respuesta = JOptionPane.showConfirmDialog(this, "Libro guardado.\n¿Registrar otro?", "Éxito", JOptionPane.YES_NO_OPTION);
-                if (respuesta == JOptionPane.YES_OPTION) { limpiar(); } else { this.dispose(); }
+            if (new LibroCrud().registrarLibro(l)) {
+                JOptionPane.showMessageDialog(this, "Libro registrado.");
+                dispose();
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error en los datos ingresados.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Error: Páginas, Año y Unidades deben ser números.");
         }
-    }
-
-    private void limpiar() {
-        txtTitulo.setText(""); txtAutor.setText(""); txtPaginas.setText("");
-        txtEditorial.setText(""); txtIsbn.setText(""); txtAnio.setText(""); txtUnidades.setText("");
-        txtCodigo.setText(new LibroCrud().generarSiguienteCodigo());
     }
 }

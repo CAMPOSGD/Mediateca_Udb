@@ -6,65 +6,50 @@ import javax.swing.*;
 import java.awt.*;
 
 public class FormularioRevista extends JFrame {
-    private JTextField txtCodigo, txtTitulo, txtEditorial, txtPeriodicidad, txtFecha, txtUnidades;
+    private JTextField txtCod, txtTit, txtEdi, txtPer, txtFec, txtUni;
 
     public FormularioRevista() {
-        setTitle("Gestión de Revistas");
-        setSize(450, 400);
+        setTitle("Registrar Nueva Revista");
+        setSize(450, 450);
+        setLayout(new GridLayout(7, 2, 10, 10));
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(7, 2, 5, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(new JLabel(" Código (Auto):"));
+        txtCod = new JTextField(new RevistaCrud().generarSiguienteCodigo());
+        txtCod.setEditable(false);
+        add(txtCod);
 
-        panel.add(new JLabel("Código (Auto):"));
-        txtCodigo = new JTextField();
-        txtCodigo.setEditable(false);
-        txtCodigo.setBackground(new Color(220, 220, 220));
-        txtCodigo.setText(new RevistaCrud().generarSiguienteCodigo());
-        panel.add(txtCodigo);
+        add(new JLabel(" Título:")); txtTit = new JTextField(); add(txtTit);
+        add(new JLabel(" Editorial:")); txtEdi = new JTextField(); add(txtEdi);
+        add(new JLabel(" Periodicidad:")); txtPer = new JTextField(); add(txtPer);
+        add(new JLabel(" Fecha (AAAA-MM-DD):")); txtFec = new JTextField(); add(txtFec);
+        add(new JLabel(" Unidades:")); txtUni = new JTextField(); add(txtUni);
 
-        panel.add(new JLabel("Título:")); txtTitulo = new JTextField(); panel.add(txtTitulo);
-        panel.add(new JLabel("Editorial:")); txtEditorial = new JTextField(); panel.add(txtEditorial);
-        panel.add(new JLabel("Periodicidad:")); txtPeriodicidad = new JTextField(); panel.add(txtPeriodicidad);
-        panel.add(new JLabel("Fecha (YYYY-MM-DD):")); txtFecha = new JTextField(); panel.add(txtFecha);
-        panel.add(new JLabel("Unidades:")); txtUnidades = new JTextField(); panel.add(txtUnidades);
-
-        JButton btnGuardar = new JButton("Guardar Revista");
+        JButton btnGuardar = new JButton("Guardar");
         btnGuardar.addActionListener(e -> guardar());
-
-        add(panel, BorderLayout.CENTER);
-        add(btnGuardar, BorderLayout.SOUTH);
+        add(btnGuardar);
+        add(new JButton("Cancelar") {{ addActionListener(e -> dispose()); }});
     }
 
     private void guardar() {
         try {
-            if (txtTitulo.getText().isEmpty() || txtUnidades.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Completa los campos obligatorios.", "Atención", JOptionPane.WARNING_MESSAGE);
+            if (!txtFec.getText().matches("\\d{4}-\\d{2}-\\d{2}")) {
+                JOptionPane.showMessageDialog(this, "Formato de fecha inválido. Use AAAA-MM-DD");
                 return;
             }
 
-            Revista revista = new Revista(
-                    txtCodigo.getText(),
-                    txtTitulo.getText(),
-                    txtEditorial.getText(),
-                    txtPeriodicidad.getText(),
-                    txtFecha.getText(),
-                    Integer.parseInt(txtUnidades.getText().trim())
+            Revista r = new Revista(
+                    txtCod.getText(), txtTit.getText(), txtEdi.getText(),
+                    txtPer.getText(), txtFec.getText(),
+                    Integer.parseInt(txtUni.getText().trim())
             );
 
-            if (new RevistaCrud().registrarRevista(revista)) {
-                int respuesta = JOptionPane.showConfirmDialog(this, "Revista guardada.\n¿Registrar otra?", "Éxito", JOptionPane.YES_NO_OPTION);
-                if (respuesta == JOptionPane.YES_OPTION) { limpiar(); } else { this.dispose(); }
+            if (new RevistaCrud().registrarRevista(r)) {
+                JOptionPane.showMessageDialog(this, "Revista registrada.");
+                dispose();
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error en los datos ingresados.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Error: Unidades debe ser un número.");
         }
-    }
-
-    private void limpiar() {
-        txtTitulo.setText(""); txtEditorial.setText(""); txtPeriodicidad.setText("");
-        txtFecha.setText(""); txtUnidades.setText("");
-        txtCodigo.setText(new RevistaCrud().generarSiguienteCodigo());
     }
 }

@@ -91,6 +91,7 @@ public class Principal extends JFrame {
         JPanel panel = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 GradientPaint gp = new GradientPaint(0, 0, new Color(210, 215, 220), 0, getHeight(), new Color(245, 245, 245));
@@ -142,9 +143,9 @@ public class Principal extends JFrame {
                 if (l != null) {
                     tipoActual = "LIBRO";
                     agregarCampo(panelCampos, "Título:", l.getTitulo());
-                    agregarCampo(panelCampos, "Editorial:", l.getEditorial());
                     agregarCampo(panelCampos, "Autor:", l.getAutor());
                     agregarCampo(panelCampos, "Páginas:", String.valueOf(l.getNumeroPaginas()));
+                    agregarCampo(panelCampos, "Editorial:", l.getEditorial());
                     agregarCampo(panelCampos, "ISBN:", l.getIsbn());
                     agregarCampo(panelCampos, "Año:", String.valueOf(l.getAnioPublicacion()));
                     agregarCampo(panelCampos, "Unidades:", String.valueOf(l.getUnidadesDisponibles()));
@@ -164,9 +165,9 @@ public class Principal extends JFrame {
                 if (cd != null) {
                     tipoActual = "CD";
                     agregarCampo(panelCampos, "Título:", cd.getTitulo());
+                    agregarCampo(panelCampos, "Artista:", cd.getArtista());
                     agregarCampo(panelCampos, "Género:", cd.getGenero());
                     agregarCampo(panelCampos, "Duración:", cd.getDuracion());
-                    agregarCampo(panelCampos, "Artista:", cd.getArtista());
                     agregarCampo(panelCampos, "N° Canciones:", String.valueOf(cd.getNumCanciones()));
                     agregarCampo(panelCampos, "Unidades:", String.valueOf(cd.getUnidadesDisponibles()));
                 }
@@ -175,9 +176,10 @@ public class Principal extends JFrame {
                 if (d != null) {
                     tipoActual = "DVD";
                     agregarCampo(panelCampos, "Título:", d.getTitulo());
-                    agregarCampo(panelCampos, "Género:", d.getGenero());
-                    agregarCampo(panelCampos, "Duración:", d.getDuracion());
                     agregarCampo(panelCampos, "Director:", d.getDirector());
+                    agregarCampo(panelCampos, "Duración:", d.getDuracion());
+                    agregarCampo(panelCampos, "Género:", d.getGenero());
+                    agregarCampo(panelCampos, "Unidades:", String.valueOf(d.getUnidadesDisponibles()));
                 }
             }
             if (!tipoActual.equals("")) {
@@ -195,22 +197,23 @@ public class Principal extends JFrame {
             try {
                 Component[] comps = panelCampos.getComponents();
                 if (tipoActual.equals("LIBRO")) {
-                    Libro l = new Libro(cod, ((JTextField)comps[1]).getText(), ((JTextField)comps[3]).getText(), ((JTextField)comps[5]).getText(),
-                            Integer.parseInt(((JTextField)comps[7]).getText()), ((JTextField)comps[9]).getText(),
-                            Integer.parseInt(((JTextField)comps[11]).getText()), Integer.parseInt(((JTextField)comps[13]).getText()));
+                    Libro l = new Libro(cod, ((JTextField)comps[1]).getText(), ((JTextField)comps[3]).getText(),
+                            Integer.parseInt(((JTextField)comps[5]).getText()), ((JTextField)comps[7]).getText(),
+                            ((JTextField)comps[9]).getText(), Integer.parseInt(((JTextField)comps[11]).getText()),
+                            Integer.parseInt(((JTextField)comps[13]).getText()));
                     if (new LibroCrud().actualizarLibro(l)) JOptionPane.showMessageDialog(this, "¡Libro actualizado!");
                 } else if (tipoActual.equals("REVISTA")) {
                     Revista r = new Revista(cod, ((JTextField)comps[1]).getText(), ((JTextField)comps[3]).getText(),
                             ((JTextField)comps[5]).getText(), ((JTextField)comps[7]).getText(), Integer.parseInt(((JTextField)comps[9]).getText()));
                     if (new RevistaCrud().actualizarRevista(r)) JOptionPane.showMessageDialog(this, "¡Revista actualizada!");
                 } else if (tipoActual.equals("CD")) {
-                    CD cd = new CD(cod, ((JTextField)comps[1]).getText(), ((JTextField)comps[3]).getText(), ((JTextField)comps[5]).getText(),
-                            ((JTextField)comps[7]).getText(), Integer.parseInt(((JTextField)comps[9]).getText()),
-                            Integer.parseInt(((JTextField)comps[11]).getText()));
+                    CD cd = new CD(cod, ((JTextField)comps[1]).getText(), ((JTextField)comps[3]).getText(),
+                            ((JTextField)comps[5]).getText(), ((JTextField)comps[7]).getText(),
+                            Integer.parseInt(((JTextField)comps[9]).getText()), Integer.parseInt(((JTextField)comps[11]).getText()));
                     if (new CdCrud().actualizarCD(cd)) JOptionPane.showMessageDialog(this, "¡CD actualizado!");
                 } else if (tipoActual.equals("DVD")) {
                     DVD d = new DVD(cod, ((JTextField)comps[1]).getText(), ((JTextField)comps[3]).getText(),
-                            ((JTextField)comps[5]).getText(), ((JTextField)comps[7]).getText());
+                            ((JTextField)comps[5]).getText(), ((JTextField)comps[7]).getText(), Integer.parseInt(((JTextField)comps[9]).getText()));
                     if (new DvdCrud().actualizarDVD(d)) JOptionPane.showMessageDialog(this, "¡DVD actualizado!");
                 }
                 panelCampos.removeAll();
@@ -233,6 +236,7 @@ public class Principal extends JFrame {
         JPanel panel = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 GradientPaint gp = new GradientPaint(0, 0, new Color(210, 215, 220), 0, getHeight(), new Color(245, 245, 245));
@@ -314,6 +318,7 @@ public class Principal extends JFrame {
         JPanel panel = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 GradientPaint gp = new GradientPaint(0, 0, new Color(210, 215, 220), 0, getHeight(), new Color(245, 245, 245));
@@ -396,7 +401,7 @@ public class Principal extends JFrame {
             private void aplicarFiltro() {
                 String texto = txtBuscar.getText().trim();
                 if (texto.length() == 0) sorter.setRowFilter(null);
-                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto));
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0, 1, 2, 3));
             }
         });
 
@@ -406,7 +411,7 @@ public class Principal extends JFrame {
             new LibroCrud().obtenerLibros().forEach(l -> modeloTabla.addRow(new Object[]{l.getCodigoInterno(), l.getTitulo(), "Libro", l.getAutor(), l.getUnidadesDisponibles()}));
             new RevistaCrud().obtenerRevistas().forEach(r -> modeloTabla.addRow(new Object[]{r.getCodigoInterno(), r.getTitulo(), "Revista", "N/A", r.getUnidadesDisponibles()}));
             new CdCrud().obtenerCDs().forEach(c -> modeloTabla.addRow(new Object[]{c.getCodigoInterno(), c.getTitulo(), "CD Audio", c.getArtista(), c.getUnidadesDisponibles()}));
-            new DvdCrud().obtenerDVDs().forEach(d -> modeloTabla.addRow(new Object[]{d.getCodigoInterno(), d.getTitulo(), "DVD", d.getDirector(), "N/A"}));
+            new DvdCrud().obtenerDVDs().forEach(d -> modeloTabla.addRow(new Object[]{d.getCodigoInterno(), d.getTitulo(), "DVD", d.getDirector(), d.getUnidadesDisponibles()}));
         });
 
         btnRefrescar.doClick();

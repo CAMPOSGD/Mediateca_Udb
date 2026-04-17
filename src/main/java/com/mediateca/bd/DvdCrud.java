@@ -1,140 +1,90 @@
 package com.mediateca.bd;
 
 import com.mediateca.modelos.DVD;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DvdCrud {
-    private static final Logger logger = LogManager.getLogger(DvdCrud.class);
-    private Conexion conexion;
 
-    public DvdCrud() { this.conexion = new Conexion(); }
+    public String generarSiguienteCodigo() {
+        String sql = "SELECT MAX(codigo_interno) FROM DVD";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next() && rs.getString(1) != null) {
+                int id = Integer.parseInt(rs.getString(1).substring(3)) + 1;
+                return String.format("DVD%05d", id);
+            }
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
+        return "DVD00001";
+    }
 
     public boolean registrarDVD(DVD d) {
-        String sqlMat = "INSERT INTO Material (codigo_interno, titulo, estado) VALUES (?, ?, 'Activo')";
-        String sqlAud = "INSERT INTO MaterialAudiovisual (codigo_interno, duracion, genero) VALUES (?, ?, ?)";
-        String sqlDVD = "INSERT INTO DVD (codigo_interno, director) VALUES (?, ?)";
-
-        Connection conn = conexion.getConexion();
-        try {
-            conn.setAutoCommit(false);
-            try (PreparedStatement s1 = conn.prepareStatement(sqlMat);
-                 PreparedStatement s2 = conn.prepareStatement(sqlAud);
-                 PreparedStatement s3 = conn.prepareStatement(sqlDVD)) {
-
-                s1.setString(1, d.getCodigoInterno());
-                s1.setString(2, d.getTitulo());
-                s1.executeUpdate();
-
-                s2.setString(1, d.getCodigoInterno());
-                s2.setString(2, d.getDuracion());
-                s2.setString(3, d.getGenero());
-                s2.executeUpdate();
-
-                s3.setString(1, d.getCodigoInterno());
-                s3.setString(2, d.getDirector());
-                s3.executeUpdate();
-
-                conn.commit();
-                return true;
-            } catch (SQLException e) {
-                if (conn != null) conn.rollback();
-                logger.error("Error en transacción DVD: " + e.getMessage());
-                return false;
-            }
+        String sql = "INSERT INTO DVD (codigo_interno, titulo, director, duracion, genero, unidades_disponibles, estado) VALUES (?, ?, ?, ?, ?, ?, 1)";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, d.getCodigoInterno());
+            ps.setString(2, d.getTitulo());
+            ps.setString(3, d.getDirector());
+            ps.setString(4, d.getDuracion());
+            ps.setString(5, d.getGenero());
+            ps.setInt(6, d.getUnidadesDisponibles());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) { return false; }
-        finally { cerrarConexion(conn); }
     }
 
     public List<DVD> obtenerDVDs() {
         List<DVD> lista = new ArrayList<>();
-        String sql = "SELECT m.codigo_interno, m.titulo, ma.genero, ma.duracion, d.director " +
-                "FROM DVD d " +
-                "INNER JOIN MaterialAudiovisual ma ON d.codigo_interno = ma.codigo_interno " +
-                "INNER JOIN Material m ON d.codigo_interno = m.codigo_interno " +
-                "WHERE m.estado = 'Activo'";
-
-        try (Connection conn = conexion.getConexion();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
+        String sql = "SELECT * FROM DVD WHERE estado = 1";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 lista.add(new DVD(
                         rs.getString("codigo_interno"),
                         rs.getString("titulo"),
-                        rs.getString("genero"),
+                        rs.getString("director"),
                         rs.getString("duracion"),
-                        rs.getString("director")
+                        rs.getString("genero"),
+                        rs.getInt("unidades_disponibles")
                 ));
             }
-        } catch (SQLException e) { logger.error("Error al obtener DVDs: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
         return lista;
     }
 
     public DVD buscarDvdPorCodigo(String codigo) {
-        String sql = "SELECT m.codigo_interno, m.titulo, ma.genero, ma.duracion, d.director " +
-                "FROM DVD d " +
-                "INNER JOIN MaterialAudiovisual ma ON d.codigo_interno = ma.codigo_interno " +
-                "INNER JOIN Material m ON d.codigo_interno = m.codigo_interno " +
-                "WHERE m.codigo_interno = ? AND m.estado = 'Activo'";
-
-        try (Connection conn = conexion.getConexion(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, codigo);
-            ResultSet rs = stmt.executeQuery();
+        String sql = "SELECT * FROM DVD WHERE codigo_interno = ? AND estado = 1";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, codigo);
+            ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return new DVD(
                         rs.getString("codigo_interno"),
                         rs.getString("titulo"),
-                        rs.getString("genero"),
+                        rs.getString("director"),
                         rs.getString("duracion"),
-                        rs.getString("director")
+                        rs.getString("genero"),
+                        rs.getInt("unidades_disponibles")
                 );
             }
-        } catch (SQLException e) { logger.error("Error al buscar DVD: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
         return null;
     }
 
     public boolean actualizarDVD(DVD d) {
-        String sqlMat = "UPDATE Material SET titulo = ? WHERE codigo_interno = ?";
-        String sqlAud = "UPDATE MaterialAudiovisual SET genero = ?, duracion = ? WHERE codigo_interno = ?";
-        String sqlDVD = "UPDATE DVD SET director = ? WHERE codigo_interno = ?";
-
-        Connection conn = conexion.getConexion();
-        try {
-            conn.setAutoCommit(false);
-            try (PreparedStatement s1 = conn.prepareStatement(sqlMat);
-                 PreparedStatement s2 = conn.prepareStatement(sqlAud);
-                 PreparedStatement s3 = conn.prepareStatement(sqlDVD)) {
-
-                s1.setString(1, d.getTitulo()); s1.setString(2, d.getCodigoInterno()); s1.executeUpdate();
-                s2.setString(1, d.getGenero()); s2.setString(2, d.getDuracion()); s2.setString(3, d.getCodigoInterno()); s2.executeUpdate();
-                s3.setString(1, d.getDirector()); s3.setString(2, d.getCodigoInterno()); s3.executeUpdate();
-
-                conn.commit();
-                return true;
-            } catch (SQLException e) {
-                if (conn != null) conn.rollback();
-                return false;
-            }
+        String sql = "UPDATE DVD SET titulo=?, director=?, duracion=?, genero=?, unidades_disponibles=? WHERE codigo_interno=?";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, d.getTitulo());
+            ps.setString(2, d.getDirector());
+            ps.setString(3, d.getDuracion());
+            ps.setString(4, d.getGenero());
+            ps.setInt(5, d.getUnidadesDisponibles());
+            ps.setString(6, d.getCodigoInterno());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) { return false; }
-        finally { cerrarConexion(conn); }
-    }
-
-    public String generarSiguienteCodigo() {
-        String sql = "SELECT MAX(codigo_interno) FROM Material WHERE codigo_interno LIKE 'DVD%'";
-        try (Connection conn = conexion.getConexion(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-            if (rs.next() && rs.getString(1) != null) {
-                int num = Integer.parseInt(rs.getString(1).substring(3));
-                return String.format("DVD%05d", num + 1);
-            }
-        } catch (Exception e) { logger.error(e.getMessage()); }
-        return "DVD00001";
-    }
-
-    private void cerrarConexion(Connection conn) {
-        try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (SQLException e) {}
     }
 }

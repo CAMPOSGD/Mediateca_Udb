@@ -1,101 +1,84 @@
 package com.mediateca.bd;
 
 import com.mediateca.modelos.Revista;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RevistaCrud {
-    private static final Logger logger = LogManager.getLogger(RevistaCrud.class);
-    private Conexion conexion;
 
-    public RevistaCrud() { this.conexion = new Conexion(); }
+    public String generarSiguienteCodigo() {
+        String sql = "SELECT MAX(codigo_interno) FROM Revista";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next() && rs.getString(1) != null) {
+                int id = Integer.parseInt(rs.getString(1).substring(3)) + 1;
+                return String.format("REV%05d", id);
+            }
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
+        return "REV00001";
+    }
 
     public boolean registrarRevista(Revista r) {
-        String sqlMat = "INSERT INTO Material (codigo_interno, titulo, estado) VALUES (?, ?, 'Activo')";
-        String sqlEsc = "INSERT INTO MaterialEscrito (codigo_interno, editorial) VALUES (?, ?)";
-        String sqlRev = "INSERT INTO Revista (codigo_interno, periodicidad, fecha_publicacion, unidades_disponibles) VALUES (?, ?, ?, ?)";
-
-        Connection conn = conexion.getConexion();
-        try {
-            conn.setAutoCommit(false);
-            try (PreparedStatement s1 = conn.prepareStatement(sqlMat);
-                 PreparedStatement s2 = conn.prepareStatement(sqlEsc);
-                 PreparedStatement s3 = conn.prepareStatement(sqlRev)) {
-
-                s1.setString(1, r.getCodigoInterno()); s1.setString(2, r.getTitulo()); s1.executeUpdate();
-                s2.setString(1, r.getCodigoInterno()); s2.setString(2, r.getEditorial()); s2.executeUpdate();
-                s3.setString(1, r.getCodigoInterno()); s3.setString(2, r.getPeriodicidad());
-                s3.setString(3, r.getFechaPublicacion()); s3.setInt(4, r.getUnidadesDisponibles()); s3.executeUpdate();
-
-                conn.commit();
-                return true;
-            } catch (SQLException e) { conn.rollback(); return false; }
+        String sql = "INSERT INTO Revista (codigo_interno, titulo, editorial, periodicidad, fecha_publicacion, unidades_disponibles, estado) VALUES (?, ?, ?, ?, ?, ?, 1)";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, r.getCodigoInterno());
+            ps.setString(2, r.getTitulo());
+            ps.setString(3, r.getEditorial());
+            ps.setString(4, r.getPeriodicidad());
+            ps.setString(5, r.getFechaPublicacion());
+            ps.setInt(6, r.getUnidadesDisponibles());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) { return false; }
-        finally { cerrarConexion(conn); }
     }
 
     public List<Revista> obtenerRevistas() {
         List<Revista> lista = new ArrayList<>();
-        String sql = "SELECT m.codigo_interno, m.titulo, me.editorial, r.periodicidad, r.fecha_publicacion, r.unidades_disponibles " +
-                "FROM Revista r " +
-                "INNER JOIN MaterialEscrito me ON r.codigo_interno = me.codigo_interno " +
-                "INNER JOIN Material m ON r.codigo_interno = m.codigo_interno " +
-                "WHERE m.estado = 'Activo'";
-        try (Connection conn = conexion.getConexion(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        String sql = "SELECT * FROM Revista WHERE estado = 1";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                lista.add(new Revista(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getInt(6)));
+                lista.add(new Revista(
+                        rs.getString("codigo_interno"), rs.getString("titulo"),
+                        rs.getString("editorial"), rs.getString("periodicidad"),
+                        rs.getString("fecha_publicacion"), rs.getInt("unidades_disponibles")
+                ));
             }
-        } catch (SQLException e) { logger.error(e.getMessage()); }
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
         return lista;
     }
 
     public Revista buscarRevistaPorCodigo(String codigo) {
-        String sql = "SELECT m.codigo_interno, m.titulo, me.editorial, r.periodicidad, r.fecha_publicacion, r.unidades_disponibles " +
-                "FROM Revista r INNER JOIN MaterialEscrito me ON r.codigo_interno = me.codigo_interno " +
-                "INNER JOIN Material m ON r.codigo_interno = m.codigo_interno WHERE m.codigo_interno = ? AND m.estado = 'Activo'";
-        try (Connection conn = conexion.getConexion(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, codigo);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return new Revista(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getInt(6));
-        } catch (SQLException e) { logger.error(e.getMessage()); }
+        String sql = "SELECT * FROM Revista WHERE codigo_interno = ? AND estado = 1";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, codigo);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new Revista(
+                        rs.getString("codigo_interno"), rs.getString("titulo"),
+                        rs.getString("editorial"), rs.getString("periodicidad"),
+                        rs.getString("fecha_publicacion"), rs.getInt("unidades_disponibles")
+                );
+            }
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
         return null;
     }
 
     public boolean actualizarRevista(Revista r) {
-        String sqlMat = "UPDATE Material SET titulo = ? WHERE codigo_interno = ?";
-        String sqlEsc = "UPDATE MaterialEscrito SET editorial = ? WHERE codigo_interno = ?";
-        String sqlRev = "UPDATE Revista SET periodicidad = ?, fecha_publicacion = ?, unidades_disponibles = ? WHERE codigo_interno = ?";
-        Connection conn = conexion.getConexion();
-        try {
-            conn.setAutoCommit(false);
-            try (PreparedStatement s1 = conn.prepareStatement(sqlMat);
-                 PreparedStatement s2 = conn.prepareStatement(sqlEsc);
-                 PreparedStatement s3 = conn.prepareStatement(sqlRev)) {
-                s1.setString(1, r.getTitulo()); s1.setString(2, r.getCodigoInterno()); s1.executeUpdate();
-                s2.setString(1, r.getEditorial()); s2.setString(2, r.getCodigoInterno()); s2.executeUpdate();
-                s3.setString(1, r.getPeriodicidad()); s3.setString(2, r.getFechaPublicacion());
-                s3.setInt(3, r.getUnidadesDisponibles()); s3.setString(4, r.getCodigoInterno()); s3.executeUpdate();
-                conn.commit(); return true;
-            } catch (SQLException e) { conn.rollback(); return false; }
+        String sql = "UPDATE Revista SET titulo=?, editorial=?, periodicidad=?, fecha_publicacion=?, unidades_disponibles=? WHERE codigo_interno=?";
+        try (Connection con = new Conexion().getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, r.getTitulo());
+            ps.setString(2, r.getEditorial());
+            ps.setString(3, r.getPeriodicidad());
+            ps.setString(4, r.getFechaPublicacion());
+            ps.setInt(5, r.getUnidadesDisponibles());
+            ps.setString(6, r.getCodigoInterno());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) { return false; }
-        finally { cerrarConexion(conn); }
-    }
-
-    public String generarSiguienteCodigo() {
-        String sql = "SELECT MAX(codigo_interno) FROM Material WHERE codigo_interno LIKE 'REV%'";
-        try (Connection conn = conexion.getConexion(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-            if (rs.next() && rs.getString(1) != null) {
-                int num = Integer.parseInt(rs.getString(1).substring(3));
-                return String.format("REV%05d", num + 1);
-            }
-        } catch (Exception e) { logger.error(e.getMessage()); }
-        return "REV00001";
-    }
-
-    private void cerrarConexion(Connection conn) {
-        try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (SQLException e) {}
     }
 }

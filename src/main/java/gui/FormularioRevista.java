@@ -10,7 +10,7 @@ public class FormularioRevista extends JFrame {
 
     public FormularioRevista() {
         setTitle("Gestión de Revistas");
-        setSize(400, 400);
+        setSize(450, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -39,26 +39,32 @@ public class FormularioRevista extends JFrame {
 
     private void guardar() {
         try {
-            if (txtTitulo.getText().isEmpty() || txtEditorial.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Por favor, llena los campos principales.", "Atención", JOptionPane.WARNING_MESSAGE);
+            if (txtTitulo.getText().isEmpty() || txtUnidades.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Completa los campos obligatorios.", "Atención", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            Revista r = new Revista(txtCodigo.getText(), txtTitulo.getText(), txtEditorial.getText(),
-                    txtPeriodicidad.getText(), txtFecha.getText(), Integer.parseInt(txtUnidades.getText()));
+            Revista revista = new Revista(
+                    txtCodigo.getText(),
+                    txtTitulo.getText(),
+                    txtEditorial.getText(),
+                    txtPeriodicidad.getText(),
+                    txtFecha.getText(),
+                    Integer.parseInt(txtUnidades.getText().trim())
+            );
 
-            if (new RevistaCrud().registrarRevista(r)) {
-                // --- LA NUEVA MAGIA AQUÍ ---
-                int respuesta = JOptionPane.showConfirmDialog(this, "Revista guardada con éxito.\n¿Deseas registrar otra revista?", "Éxito", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (new RevistaCrud().registrarRevista(revista)) {
+                int respuesta = JOptionPane.showConfirmDialog(this, "Revista guardada.\n¿Registrar otra?", "Éxito", JOptionPane.YES_NO_OPTION);
                 if (respuesta == JOptionPane.YES_OPTION) { limpiar(); } else { this.dispose(); }
-            } else {
-                JOptionPane.showMessageDialog(this, "Error al guardar en la BD.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(this, "Revisa los campos numéricos.", "Error", JOptionPane.ERROR_MESSAGE); }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error en los datos ingresados.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void limpiar() {
-        txtTitulo.setText(""); txtEditorial.setText(""); txtPeriodicidad.setText(""); txtFecha.setText(""); txtUnidades.setText("");
+        txtTitulo.setText(""); txtEditorial.setText(""); txtPeriodicidad.setText("");
+        txtFecha.setText(""); txtUnidades.setText("");
         txtCodigo.setText(new RevistaCrud().generarSiguienteCodigo());
     }
 }
